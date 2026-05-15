@@ -2,6 +2,7 @@ import requests
 
 EXPLORE_URL = "https://apis.roblox.com/explore-api/v1/get-sorts?sessionId=0"
 GAMES_DETAIL_URL = "https://games.roblox.com/v1/games"
+GAMES_VOTES_URL = "https://games.roblox.com/v1/games/votes"
 THUMBS_BASE = "https://thumbnails.roblox.com/v1/games/icons"
 CCU_SORT_ID = "CCU_Based_V1"
 MAX_GAMES = 100
@@ -53,7 +54,9 @@ def fetch_top_games():
 
     details = _batched_get(GAMES_DETAIL_URL, ids, {})
     creator_map = {g["id"]: g.get("creator", {}).get("name", "Unknown") for g in details}
-    upvotes_map = {g["id"]: g.get("totalUpVotes", 0) for g in details}
+
+    votes = _batched_get(GAMES_VOTES_URL, ids, {})
+    upvotes_map = {g["id"]: g.get("upVotes", 0) for g in votes}
 
     games_with_creator = [
         {**g, "creatorName": creator_map.get(g["universeId"], "Unknown"), "upVotes": upvotes_map.get(g["universeId"], 0)}
