@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roblox Live Leaderboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Roblox Live Leaderboard</h1>
+    <div class="ticker">
+      <span id="last-updated">Loading...</span>
+      <span id="countdown"></span>
+    </div>
+  </header>
+  <main>
+    <table id="leaderboard">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th></th>
+          <th>Game</th>
+          <th>Players</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body">
+        <tr><td colspan="5" class="loading">Fetching data...</td></tr>
+      </tbody>
+    </table>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
