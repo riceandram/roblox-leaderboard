@@ -1,13 +1,21 @@
 const REFRESH_MS = 5 * 60 * 1000;
 let nextRefresh = Date.now() + REFRESH_MS;
 
+function esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function formatCount(n) {
   return n.toLocaleString();
 }
 
 function trendHtml(trend) {
-  if (trend === 'up') return '<span class="trend trend-up" title="Increased">&#8593;</span>';
-  if (trend === 'down') return '<span class="trend trend-down" title="Decreased">&#8595;</span>';
+  if (trend === 'up') return '<span class="trend trend-up" title="Increased since last refresh">&#8593;</span>';
+  if (trend === 'down') return '<span class="trend trend-down" title="Decreased since last refresh">&#8595;</span>';
   return '<span class="trend trend-same">&mdash;</span>';
 }
 
@@ -35,14 +43,14 @@ function renderLeaderboard(data) {
   tbody.innerHTML = data.games.map((g, i) => {
     const rank = i + 1;
     const thumb = g.thumbnailUrl
-      ? `<img src="${g.thumbnailUrl}" alt="${g.name}" loading="lazy" />`
+      ? `<img src="${esc(g.thumbnailUrl)}" alt="${esc(g.name)}" loading="lazy" />`
       : '';
     return `<tr>
       <td><span class="${rankClass(rank)}">#${rank}</span></td>
       <td class="thumb-cell">${thumb}</td>
       <td>
-        <div class="game-name">${g.name}</div>
-        <div class="creator-name">${g.creatorName}</div>
+        <div class="game-name">${esc(g.name)}</div>
+        <div class="creator-name">${esc(g.creatorName)}</div>
       </td>
       <td class="player-count">${formatCount(g.playerCount)}</td>
       <td>${trendHtml(g.trend)}</td>
@@ -59,14 +67,20 @@ function updateCountdown() {
 }
 
 async function loadData() {
+  const tbody = document.getElementById('leaderboard-body');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
   try {
-    const res = await fetch('/api/games');
+    const res = await fetch('/api/games', { signal: controller.signal });
+    clearTimeout(timeout);
     if (!res.ok) throw new Error('Server error');
     const data = await res.json();
     renderLeaderboard(data);
     nextRefresh = Date.now() + REFRESH_MS;
   } catch (e) {
+    clearTimeout(timeout);
     console.error('Failed to load data:', e);
+    tbody.innerHTML = '<tr><td colspan="5" class="loading error">Failed to load data. Retrying in 5 minutes...</td></tr>';
   }
 }
 
