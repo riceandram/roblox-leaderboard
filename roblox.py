@@ -5,6 +5,17 @@ GAMES_DETAIL_URL = "https://games.roblox.com/v1/games"
 THUMBS_BASE = "https://thumbnails.roblox.com/v1/games/icons"
 CCU_SORT_ID = "CCU_Based_V1"
 MAX_GAMES = 100
+BATCH_SIZE = 50
+
+
+def _batched_get(url, ids, extra_params, timeout=10):
+    results = []
+    for i in range(0, len(ids), BATCH_SIZE):
+        chunk = ids[i:i + BATCH_SIZE]
+        resp = requests.get(url, params={"universeIds": ",".join(str(x) for x in chunk), **extra_params}, timeout=timeout)
+        resp.raise_for_status()
+        results.extend(resp.json().get("data", []))
+    return results
 
 
 def build_games_data(games, thumbs):
@@ -23,7 +34,6 @@ def build_games_data(games, thumbs):
 
 
 def fetch_top_games():
-    # Fetch CCU-sorted game list from explore API (includes playerCount)
     resp = requests.get(EXPLORE_URL, timeout=10)
     resp.raise_for_status()
     sorts = resp.json().get("sorts", [])
@@ -37,30 +47,17 @@ def fetch_top_games():
     if not explore_games:
         return []
 
-    # Take top MAX_GAMES by playerCount
     explore_games = sorted(explore_games, key=lambda g: g["playerCount"], reverse=True)[:MAX_GAMES]
-    id_str = ",".join(str(g["universeId"]) for g in explore_games)
+    ids = [g["universeId"] for g in explore_games]
 
-    # Fetch creator names from games detail API
-    details_resp = requests.get(GAMES_DETAIL_URL, params={"universeIds": id_str}, timeout=10)
-    details_resp.raise_for_status()
-    creator_map = {
-        g["id"]: g.get("creator", {}).get("name", "Unknown")
-        for g in details_resp.json().get("data", [])
-    }
+    details = _batched_get(GAMES_DETAIL_URL, ids, {})
+    creator_map = {g["id"]: g.get("creator", {}).get("name", "Unknown") for g in details}
 
     games_with_creator = [
         {**g, "creatorName": creator_map.get(g["universeId"], "Unknown")}
         for g in explore_games
     ]
 
-    # Fetch thumbnails
-    thumbs_resp = requests.get(
-        THUMBS_BASE,
-        params={"universeIds": id_str, "size": "150x150", "format": "Png", "isCircular": "false"},
-        timeout=10,
-    )
-    thumbs_resp.raise_for_status()
-    thumbs = thumbs_resp.json().get("data", [])
+    thumbs = _batched_get(THUMBS_BASE, ids, {"size": "150x150", "format": "Png", "isCircular": "false"})
 
     return build_games_data(games_with_creator, thumbs)
