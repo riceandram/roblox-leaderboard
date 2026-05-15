@@ -248,6 +248,7 @@ function renderLeaderboard(data) {
       <td>${rankChangeHtml(g.rankChange || 0)}</td>
       <td>${trendHtml(g.trend)}</td>
       <td>${sparklineSvg(g.history)}</td>
+      <td class="upvotes">👍 ${formatCount(g.upVotes || 0)}</td>
     </tr>`;
   }).join('');
 

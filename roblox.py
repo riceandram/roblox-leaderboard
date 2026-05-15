@@ -27,6 +27,7 @@ def build_games_data(games, thumbs):
             "playerCount": g["playerCount"],
             "creatorName": g["creatorName"],
             "thumbnailUrl": thumb_map.get(g["universeId"]),
+            "upVotes": g.get("upVotes", 0),
         }
         for g in games
     ]
@@ -52,9 +53,10 @@ def fetch_top_games():
 
     details = _batched_get(GAMES_DETAIL_URL, ids, {})
     creator_map = {g["id"]: g.get("creator", {}).get("name", "Unknown") for g in details}
+    upvotes_map = {g["id"]: g.get("totalUpVotes", 0) for g in details}
 
     games_with_creator = [
-        {**g, "creatorName": creator_map.get(g["universeId"], "Unknown")}
+        {**g, "creatorName": creator_map.get(g["universeId"], "Unknown"), "upVotes": upvotes_map.get(g["universeId"], 0)}
         for g in explore_games
     ]
 

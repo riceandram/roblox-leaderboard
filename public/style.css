@@ -350,6 +350,9 @@ td { padding: 0.7rem 1rem; vertical-align: middle; }
 
 .hl-sub { font-size: 0.8rem; color: #888; }
 
+/* ── v2: Upvotes column ───────────────────────── */
+.upvotes { font-size: 0.85rem; color: #aaa; white-space: nowrap; }
+
 /* ── v2: Search bar ───────────────────────────── */
 .search-bar-wrap {
   margin-bottom: 0.75rem;
