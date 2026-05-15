@@ -1,4 +1,5 @@
 import threading
+import time
 from datetime import datetime, timezone
 from flask import Flask, jsonify
 from roblox import fetch_top_games
@@ -10,6 +11,7 @@ def create_app(fetcher=fetch_top_games):
     app = Flask(__name__, static_folder="public", static_url_path="")
 
     cache = {"games": [], "lastUpdated": None}
+    cache_lock = threading.Lock()
     prev_counts = {}
 
     def refresh():
@@ -28,14 +30,16 @@ def create_app(fetcher=fetch_top_games):
                 trend = "same"
             with_trend.append({**g, "trend": trend})
         prev_counts = {g["universeId"]: g["playerCount"] for g in fresh}
-        cache["games"] = with_trend
-        cache["lastUpdated"] = datetime.now(timezone.utc).isoformat()
+        with cache_lock:
+            cache["games"] = with_trend
+            cache["lastUpdated"] = datetime.now(timezone.utc).isoformat()
 
     app.config["REFRESH"] = refresh
 
     @app.route("/api/games")
     def api_games():
-        return jsonify(cache)
+        with cache_lock:
+            return jsonify(dict(cache))
 
     @app.route("/")
     def index():
@@ -45,7 +49,6 @@ def create_app(fetcher=fetch_top_games):
 
 
 def _start_scheduler(app):
-    import time
     def loop():
         while True:
             time.sleep(REFRESH_SECONDS)
