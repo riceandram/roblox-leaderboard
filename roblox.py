@@ -4,7 +4,7 @@ EXPLORE_URL = "https://apis.roblox.com/explore-api/v1/get-sorts?sessionId=0"
 GAMES_DETAIL_URL = "https://games.roblox.com/v1/games"
 THUMBS_BASE = "https://thumbnails.roblox.com/v1/games/icons"
 CCU_SORT_ID = "CCU_Based_V1"
-MAX_GAMES = 50
+MAX_GAMES = 100
 
 
 def build_games_data(games, thumbs):
