@@ -1,0 +1,112 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0f0f13;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+header {
+  background: #1a1a24;
+  border-bottom: 2px solid #e50000;
+  padding: 1.2rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.03em;
+}
+
+.ticker {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.8rem;
+  color: #888;
+  gap: 2px;
+}
+
+#countdown { color: #e50000; font-weight: 600; }
+
+main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #1a1a24;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+thead th {
+  background: #12121a;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #666;
+}
+
+tbody tr {
+  border-bottom: 1px solid #24242e;
+  transition: background 0.15s;
+}
+
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: #20202c; }
+
+td { padding: 0.7rem 1rem; vertical-align: middle; }
+
+.rank {
+  font-size: 1rem;
+  font-weight: 700;
+  width: 48px;
+  text-align: center;
+}
+
+.rank-1 { color: #ffd700; }
+.rank-2 { color: #c0c0c0; }
+.rank-3 { color: #cd7f32; }
+
+.thumb-cell { width: 60px; }
+
+.thumb-cell img {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: #2a2a36;
+}
+
+.game-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #fff;
+}
+
+.creator-name {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 2px;
+}
+
+.player-count {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #00d4aa;
+  text-align: right;
+}
+
+.trend { font-size: 1.2rem; text-align: center; width: 40px; }
+.trend-up { color: #00c853; }
+.trend-down { color: #e53935; }
+.trend-same { color: #444; }
+
+.loading { text-align: center; padding: 3rem; color: #666; }
