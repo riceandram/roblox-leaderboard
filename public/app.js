@@ -1,5 +1,7 @@
-const REFRESH_MS = 5 * 60 * 1000;
+const REFRESH_MS = 2 * 60 * 1000;
+const BIG_MOVER_THRESHOLD = 5;
 let nextRefresh = Date.now() + REFRESH_MS;
+let prevPlayerCounts = {};
 
 function esc(str) {
   return String(str)
@@ -19,11 +21,47 @@ function trendHtml(trend) {
   return '<span class="trend trend-same">&mdash;</span>';
 }
 
+function rankChangeHtml(change) {
+  if (change > 0) return `<span class="rank-change up">▲${change}</span>`;
+  if (change < 0) return `<span class="rank-change down">▼${Math.abs(change)}</span>`;
+  return '<span class="rank-change same">—</span>';
+}
+
 function rankClass(rank) {
   if (rank === 1) return 'rank rank-1';
   if (rank === 2) return 'rank rank-2';
   if (rank === 3) return 'rank rank-3';
   return 'rank';
+}
+
+// ── Sparkline ─────────────────────────────────────────────────────────────────
+
+function sparklineSvg(history) {
+  if (!history || history.length < 2) return '';
+  const W = 64, H = 24, pad = 2;
+  const min = Math.min(...history);
+  const max = Math.max(...history);
+  const range = max - min || 1;
+  const xs = history.map((_, i) => pad + (i / (history.length - 1)) * (W - pad * 2));
+  const ys = history.map(v => H - pad - ((v - min) / range) * (H - pad * 2));
+  const points = xs.map((x, i) => `${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  return `<svg class="sparkline" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <polyline points="${points}" fill="none" stroke="#00d4aa" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+
+// ── Animated counter ──────────────────────────────────────────────────────────
+
+function animateCounter(el, from, to, duration = 600) {
+  if (from === to) { el.textContent = formatCount(to); return; }
+  const start = performance.now();
+  function tick(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    el.textContent = formatCount(Math.round(from + (to - from) * eased));
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
 }
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
@@ -38,6 +76,35 @@ function initTabs() {
       if (panel) panel.classList.add('active');
     });
   });
+}
+
+// ── Search filter ─────────────────────────────────────────────────────────────
+
+function initSearch() {
+  document.getElementById('search').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    document.querySelectorAll('#leaderboard-body tr').forEach(row => {
+      const name = row.querySelector('.game-name');
+      row.style.display = (!name || name.textContent.toLowerCase().includes(q)) ? '' : 'none';
+    });
+  });
+}
+
+// ── Big mover banner ──────────────────────────────────────────────────────────
+
+function renderBanner(games) {
+  const banner = document.getElementById('big-mover-banner');
+  const movers = games.filter(g => Math.abs(g.rankChange) >= BIG_MOVER_THRESHOLD);
+  if (movers.length === 0) { banner.classList.add('hidden'); return; }
+
+  const chips = movers.map(g => {
+    const dir = g.rankChange > 0 ? 'up' : 'down';
+    const arrow = g.rankChange > 0 ? '▲' : '▼';
+    return `<span class="mover-chip ${dir}">${arrow}${Math.abs(g.rankChange)} ${esc(g.name)}</span>`;
+  }).join('');
+
+  banner.innerHTML = `🚀 Big movers: ${chips}`;
+  banner.classList.remove('hidden');
 }
 
 // ── Stats computation (pure — no DOM) ────────────────────────────────────────
@@ -65,7 +132,6 @@ function renderStats(data) {
   const games = data.games;
   const s = computeStats(games);
 
-  // Stat cards
   document.getElementById('stat-cards').innerHTML = `
     <div class="stat-card" style="--card-color:#e50000">
       <div class="stat-icon">🔥</div>
@@ -94,7 +160,6 @@ function renderStats(data) {
     </div>
   `;
 
-  // Podium — order: 2nd left, 1st centre, 3rd right
   const top3 = games.slice(0, 3);
   const podiumOrder = [top3[1], top3[0], top3[2]];
   const podiumRanks = [2, 1, 3];
@@ -113,7 +178,6 @@ function renderStats(data) {
     </div>`;
   }).join('');
 
-  // Bar chart
   const maxCount = games[0].playerCount || 1;
   document.getElementById('bar-chart').innerHTML = games.map((g, i) => {
     const pct = Math.max(1, Math.round((g.playerCount / maxCount) * 100));
@@ -125,7 +189,6 @@ function renderStats(data) {
     </div>`;
   }).join('');
 
-  // Highlight cards
   const king = games[0];
   const kingThumb = king.thumbnailUrl
     ? `<img src="${esc(king.thumbnailUrl)}" alt="${esc(king.name)}" />`
@@ -163,26 +226,46 @@ function renderLeaderboard(data) {
   }
 
   if (!data.games || data.games.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="loading">No data available.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="loading">No data available.</td></tr>';
     return;
   }
+
+  renderBanner(data.games);
 
   tbody.innerHTML = data.games.map((g, i) => {
     const rank = i + 1;
     const thumb = g.thumbnailUrl
       ? `<img src="${esc(g.thumbnailUrl)}" alt="${esc(g.name)}" loading="lazy" />`
       : '';
-    return `<tr>
+    return `<tr data-uid="${g.universeId}">
       <td><span class="${rankClass(rank)}">#${rank}</span></td>
       <td class="thumb-cell">${thumb}</td>
       <td>
         <div class="game-name">${esc(g.name)}</div>
         <div class="creator-name">${esc(g.creatorName)}</div>
       </td>
-      <td class="player-count">${formatCount(g.playerCount)}</td>
+      <td class="player-count"><span class="count-val">${formatCount(g.playerCount)}</span></td>
+      <td>${rankChangeHtml(g.rankChange || 0)}</td>
       <td>${trendHtml(g.trend)}</td>
+      <td>${sparklineSvg(g.history)}</td>
     </tr>`;
   }).join('');
+
+  // Animate counters and flash rows
+  data.games.forEach(g => {
+    const row = tbody.querySelector(`tr[data-uid="${g.universeId}"]`);
+    if (!row) return;
+    const countEl = row.querySelector('.count-val');
+    const prev = prevPlayerCounts[g.universeId];
+    if (prev !== undefined && prev !== g.playerCount) {
+      animateCounter(countEl, prev, g.playerCount);
+      row.classList.remove('flash-up', 'flash-down');
+      void row.offsetWidth; // reflow to restart animation
+      row.classList.add(g.playerCount > prev ? 'flash-up' : 'flash-down');
+    }
+  });
+
+  prevPlayerCounts = Object.fromEntries(data.games.map(g => [g.universeId, g.playerCount]));
 }
 
 // ── Countdown ─────────────────────────────────────────────────────────────────
@@ -212,13 +295,14 @@ async function loadData() {
   } catch (e) {
     clearTimeout(timeout);
     console.error('Failed to load data:', e);
-    tbody.innerHTML = '<tr><td colspan="5" class="loading error">Failed to load data. Retrying in 5 minutes...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="loading error">Failed to load data. Retrying...</td></tr>';
   }
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
 initTabs();
+initSearch();
 loadData();
 setInterval(loadData, REFRESH_MS);
 setInterval(updateCountdown, 1000);

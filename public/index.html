@@ -20,6 +20,10 @@
   </div>
   <main>
     <div id="leaderboard-panel" class="panel active">
+      <div id="big-mover-banner" class="big-mover-banner hidden"></div>
+      <div class="search-bar-wrap">
+        <input id="search" type="text" placeholder="Search games..." autocomplete="off" />
+      </div>
       <table id="leaderboard">
         <thead>
           <tr>
@@ -27,11 +31,13 @@
             <th></th>
             <th>Game</th>
             <th>Players</th>
-            <th></th>
+            <th>Change</th>
+            <th>Trend</th>
+            <th>Last Hour</th>
           </tr>
         </thead>
         <tbody id="leaderboard-body">
-          <tr><td colspan="5" class="loading">Fetching data...</td></tr>
+          <tr><td colspan="7" class="loading">Fetching data...</td></tr>
         </tbody>
       </table>
     </div>

@@ -1,10 +1,12 @@
 import threading
 import time
+from collections import defaultdict
 from datetime import datetime, timezone
 from flask import Flask, jsonify
 from roblox import fetch_top_games
 
-REFRESH_SECONDS = 5 * 60
+REFRESH_SECONDS = 2 * 60
+HISTORY_MAX = 12
 
 
 def create_app(fetcher=fetch_top_games):
@@ -13,13 +15,18 @@ def create_app(fetcher=fetch_top_games):
     cache = {"games": [], "lastUpdated": None}
     cache_lock = threading.Lock()
     prev_counts = {}
+    prev_ranks = {}
+    history = defaultdict(list)
 
     def refresh():
-        nonlocal prev_counts
+        nonlocal prev_counts, prev_ranks
         fresh = fetcher()
-        with_trend = []
-        for g in fresh:
-            prev = prev_counts.get(g["universeId"])
+        with_meta = []
+        for i, g in enumerate(fresh):
+            uid = g["universeId"]
+            rank = i + 1
+            prev = prev_counts.get(uid)
+
             if prev is None:
                 trend = "same"
             elif g["playerCount"] > prev:
@@ -28,10 +35,22 @@ def create_app(fetcher=fetch_top_games):
                 trend = "down"
             else:
                 trend = "same"
-            with_trend.append({**g, "trend": trend})
+
+            prev_rank = prev_ranks.get(uid)
+            rank_change = (prev_rank - rank) if prev_rank is not None else 0
+
+            hist = history[uid]
+            hist.append(g["playerCount"])
+            if len(hist) > HISTORY_MAX:
+                hist.pop(0)
+
+            with_meta.append({**g, "trend": trend, "rankChange": rank_change, "history": list(hist)})
+
         prev_counts = {g["universeId"]: g["playerCount"] for g in fresh}
+        prev_ranks = {g["universeId"]: i + 1 for i, g in enumerate(fresh)}
+
         with cache_lock:
-            cache["games"] = with_trend
+            cache["games"] = with_meta
             cache["lastUpdated"] = datetime.now(timezone.utc).isoformat()
 
     app.config["REFRESH"] = refresh

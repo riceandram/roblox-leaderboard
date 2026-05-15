@@ -350,6 +350,90 @@ td { padding: 0.7rem 1rem; vertical-align: middle; }
 
 .hl-sub { font-size: 0.8rem; color: #888; }
 
+/* ── v2: Search bar ───────────────────────────── */
+.search-bar-wrap {
+  margin-bottom: 0.75rem;
+}
+
+#search {
+  width: 100%;
+  background: #1a1a24;
+  border: 1px solid #2a2a36;
+  border-radius: 8px;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  padding: 0.6rem 1rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+#search:focus { border-color: #e50000; }
+#search::placeholder { color: #444; }
+
+/* ── v2: Big mover banner ─────────────────────── */
+.big-mover-banner {
+  background: linear-gradient(90deg, #1a1a24, #1e1424);
+  border: 1px solid #7c6fff44;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  color: #c8bfff;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.big-mover-banner.hidden { display: none; }
+
+.mover-chip {
+  background: #2a2040;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.mover-chip.up { color: #00c853; }
+.mover-chip.down { color: #e53935; }
+
+/* ── v2: Rank change column ───────────────────── */
+.rank-change { font-size: 0.85rem; font-weight: 600; text-align: center; }
+.rank-change.up { color: #00c853; }
+.rank-change.down { color: #e53935; }
+.rank-change.same { color: #444; }
+
+/* ── v2: Trend pulse animation ────────────────── */
+@keyframes pulse-up {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes pulse-down {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.trend-up { color: #00c853; animation: pulse-up 1.4s ease-in-out infinite; }
+.trend-down { color: #e53935; animation: pulse-down 1.4s ease-in-out infinite; }
+
+/* ── v2: Row flash animations ─────────────────── */
+@keyframes flash-up {
+  0% { background: rgba(0, 200, 83, 0.18); }
+  100% { background: transparent; }
+}
+
+@keyframes flash-down {
+  0% { background: rgba(229, 57, 53, 0.18); }
+  100% { background: transparent; }
+}
+
+tbody tr.flash-up { animation: flash-up 1s ease-out forwards; }
+tbody tr.flash-down { animation: flash-down 1s ease-out forwards; }
+
+/* ── v2: Sparkline ────────────────────────────── */
+.sparkline { display: block; }
+
 /* ── Responsive additions ─────────────────────── */
 @media (max-width: 600px) {
   .stat-cards { grid-template-columns: repeat(2, 1fr); }
