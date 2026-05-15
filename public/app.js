@@ -34,7 +34,8 @@ function initTabs() {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById(btn.dataset.tab + '-panel').classList.add('active');
+      const panel = document.getElementById(btn.dataset.tab + '-panel');
+      if (panel) panel.classList.add('active');
     });
   });
 }
@@ -95,9 +96,10 @@ function renderStats(data) {
 
   // Podium — order: 2nd left, 1st centre, 3rd right
   const top3 = games.slice(0, 3);
-  const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
+  const podiumOrder = [top3[1], top3[0], top3[2]];
   const podiumRanks = [2, 1, 3];
   document.getElementById('podium').innerHTML = podiumOrder.map((g, i) => {
+    if (!g) return '';
     const rank = podiumRanks[i];
     const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
     const thumb = g.thumbnailUrl
@@ -112,7 +114,7 @@ function renderStats(data) {
   }).join('');
 
   // Bar chart
-  const maxCount = games[0].playerCount;
+  const maxCount = games[0].playerCount || 1;
   document.getElementById('bar-chart').innerHTML = games.map((g, i) => {
     const pct = Math.max(1, Math.round((g.playerCount / maxCount) * 100));
     const cls = i < 3 ? ` top-${i + 1}` : '';
